@@ -136,7 +136,7 @@ int main(void)
 		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_14);
 		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_15);
 		
-		//MPU6050_DMP_Get_Date(&pitch,&roll,&yaw);
+		MPU6050_DMP_Get_Date(&pitch,&roll,&yaw);
   }
   /* USER CODE END 3 */
 }
