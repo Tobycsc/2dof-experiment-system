@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "INS_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,13 +45,14 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+osThreadId Gimbal_TASKHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId INS_TASKHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+void Gimbal_Task(void const * argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -128,6 +129,8 @@ void MX_FREERTOS_Init(void) {
   INS_TASKHandle = osThreadCreate(osThread(INS_TASK), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
+//	 osThreadDef(Gimbal_TASK, Gimbal_Task, osPriorityHigh, 0, 512);
+//  Gimbal_TASKHandle = osThreadCreate(osThread(Gimbal_TASK), NULL);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
@@ -146,7 +149,7 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
 }

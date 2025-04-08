@@ -19,6 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "adc.h"
+#include "crc.h"
 #include "dma.h"
 #include "i2c.h"
 #include "spi.h"
@@ -29,7 +31,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "bsp_delay.h"
+#include "bsp_adc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -102,8 +105,11 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init();
   MX_USB_OTG_FS_PCD_Init();
+  MX_ADC1_Init();
+  MX_CRC_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+	delay_init();
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
