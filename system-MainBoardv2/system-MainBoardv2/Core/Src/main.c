@@ -110,6 +110,10 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 	delay_init();
+	TIM1->CCR2=1000;
+	TIM1->CCR3=1000;
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */

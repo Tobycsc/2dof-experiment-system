@@ -30,6 +30,7 @@
 #include "bsp_imu_pwm.h"
 #include "bsp_spi.h"
 #include "bmi088driver.h"
+
 #include "pid.h"
 #include "ahrs.h"
 
@@ -70,7 +71,7 @@
   * @param[in]      ist8310: 磁力计数据
   * @retval         none
   */
-static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_real_data_t *bmi088);
+static void imu_cali_slove(fp32 gyro[3], fp32 accel[3],  bmi088_real_data_t *bmi088);
 
 /**
   * @brief          control the temperature of bmi088
@@ -170,7 +171,7 @@ fp32 INS_angle[3] = {0.0f, 0.0f, 0.0f};      //euler angle, unit rad.欧拉角 单位
 fp32 INS_angle_deg[3] = {0.0f, 0.0f, 0.0f};
 
 
-uint16_t ywj;
+
 
 
 /**
@@ -195,10 +196,10 @@ void INS_Task(void const *pvParameters)
         osDelay(100);
     }	
 		
-		
+
     BMI088_read(bmi088_real_data.gyro, bmi088_real_data.accel, &bmi088_real_data.temp);
-		
-		imu_cali_slove(INS_gyro, INS_accel,  &bmi088_real_data);
+    //rotate and zero drift 
+    imu_cali_slove(INS_gyro, INS_accel, &bmi088_real_data);
 
     PID_init(&imu_temp_pid, PID_POSITION, imu_temp_PID, TEMPERATURE_PID_MAX_OUT, TEMPERATURE_PID_MAX_IOUT);
     AHRS_init(INS_quat, INS_accel, INS_mag);
@@ -223,10 +224,10 @@ void INS_Task(void const *pvParameters)
 
     imu_start_dma_flag = 1;
 		
-		bmi088_offset_data.gyro[0] = -0.00674985256f; 
+		bmi088_offset_data.gyro[0] = -0.00355405896f; 
 		bmi088_offset_data.gyro[1] = -0.00593135692f;
-		bmi088_offset_data.gyro[2] = -0.0061169751f;
-		//mpu_offset_clc();
+		bmi088_offset_data.gyro[2] = -0.000790652586f;
+//		mpu_offset_clc();
     
     while (1)
     {
@@ -234,8 +235,8 @@ void INS_Task(void const *pvParameters)
         //等待SPI DMA传输
         while (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)!= pdPASS)
         {
-
         }
+
 
         if(gyro_update_flag & (1 << IMU_UPDATE_SHFITS))
         {
@@ -260,7 +261,9 @@ void INS_Task(void const *pvParameters)
             imu_temp_control(bmi088_real_data.temp);
         }
 
-				imu_cali_slove(INS_gyro, INS_accel,  &bmi088_real_data);
+        //rotate and zero drift 
+        imu_cali_slove(INS_gyro, INS_accel, &bmi088_real_data);
+
 
         //加速度计低通滤波
         //accel low-pass filter
@@ -313,12 +316,13 @@ void INS_Task(void const *pvParameters)
   * @param[in]      ist8310: 磁力计数据
   * @retval         none
   */
-static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], bmi088_real_data_t *bmi088)
+static void imu_cali_slove(fp32 gyro[3], fp32 accel[3],  bmi088_real_data_t *bmi088)
 {
     for (uint8_t i = 0; i < 3; i++)
     {
         gyro[i] = bmi088->gyro[0] * gyro_scale_factor[i][0] + bmi088->gyro[1] * gyro_scale_factor[i][1] + bmi088->gyro[2] * gyro_scale_factor[i][2];
         accel[i] = bmi088->accel[0] * accel_scale_factor[i][0] + bmi088->accel[1] * accel_scale_factor[i][1] + bmi088->accel[2] * accel_scale_factor[i][2] + accel_offset[i];
+
     }
 }
 
@@ -543,6 +547,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             imu_cmd_spi_dma();
         }
     }
+
     else if(GPIO_Pin == GPIO_PIN_0)
     {
 				imu_read_flag=1;

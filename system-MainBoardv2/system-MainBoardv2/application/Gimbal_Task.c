@@ -25,12 +25,12 @@ float yaw_angle_err = 0, pitch_angle_err = 0;
 float auto_aim_err_yaw = 0, auto_aim_err_pitch = 0;
 int auto_aim_vx = 0, auto_aim_vz = 0;
 
+
+
 float BattVotg;
 
-//extern ext_game_robot_state_t Game_Robot_State;
-//extern fifo_s_t Referee_FIFO;
-extern uint8_t chassis_follow_gimbal_changing;
 
+uint32_t PwmL=1000,PwmR=1000;
 
 
 void Gimbal_Task(void const* argument)
@@ -42,9 +42,10 @@ void Gimbal_Task(void const* argument)
     {
 
 
+				TIM1->CCR2=PwmL;
+				TIM1->CCR3=PwmR;
 
-
-        vTaskDelay(200);
+        vTaskDelay(20);
     }
 }
 
