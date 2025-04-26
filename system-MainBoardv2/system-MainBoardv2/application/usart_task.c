@@ -23,7 +23,7 @@ extern DMA_HandleTypeDef hdma_usart2_tx;
 
 
 
-void referee_usart_task(void const* argument)
+void usart_task(void const* argument)
 {
 
 

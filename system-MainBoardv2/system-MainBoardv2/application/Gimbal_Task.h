@@ -6,50 +6,47 @@
 
 
 
+#define ROLL_ANGLE_PID_KP 2000.0f//0.2f
+#define ROLL_ANGLE_PID_KI 100.0f
+#define ROLL_ANGLE_PID_KD 10.f//3.0f
+#define ROLL_ANGLE_PID_MAX_OUT 24000.0f
+#define ROLL_ANGLE_PID_MAX_IOUT 5000.0f
 
-#define YAW_MOTOR_SPEED_PID_KP 8000.0f
-#define YAW_MOTOR_SPEED_PID_KI 75.0f
-#define YAW_MOTOR_SPEED_PID_KD 0.0f
-#define YAW_MOTOR_SPEED_PID_MAX_OUT 25000.0f
-#define YAW_MOTOR_SPEED_PID_MAX_IOUT 1300.0f
-
-#define YAW_MOTOR_ANGLE_PID_KP 0.2f
-#define YAW_MOTOR_ANGLE_PID_KI 0.0f
-#define YAW_MOTOR_ANGLE_PID_KD 0.0f
-#define YAW_MOTOR_ANGLE_PID_MAX_OUT 6.0f
-#define YAW_MOTOR_ANGLE_PID_MAX_IOUT 100.0f
-
-
-#define YAW_MOTOR_AUTO_AIM_PID_KP 0.1f//0.2f
-#define YAW_MOTOR_AUTO_AIM_PID_KI 0.0003f//0.001f
-#define YAW_MOTOR_AUTO_AIM_PID_KD 0.0f
-#define YAW_MOTOR_AUTO_AIM_PID_MAX_OUT 6.0f
-#define YAW_MOTOR_AUTO_AIM_PID_MAX_IOUT 1000.0f
-
-#define PITCH_MOTOR_SPEED_PID_KP 9700.0f
-#define PITCH_MOTOR_SPEED_PID_KI 100.0f
-#define PITCH_MOTOR_SPEED_PID_KD 0.0f
-#define PITCH_MOTOR_SPEED_PID_MAX_OUT 25000.0f
-#define PITCH_MOTOR_SPEED_PID_MAX_IOUT 7000.0f
-
-#define PITCH_MOTOR_ANGLE_PID_KP 0.2f//0.2f
-#define PITCH_MOTOR_ANGLE_PID_KI 0.0f
-#define PITCH_MOTOR_ANGLE_PID_KD 0.0f//3.0f
-#define PITCH_MOTOR_ANGLE_PID_MAX_OUT 3.0f
-#define PITCH_MOTOR_ANGLE_PID_MAX_IOUT 10.0f
+#define PITCH_ANGLE_PID_KP 2500.0f//0.2f
+#define PITCH_ANGLE_PID_KI 500.0f
+#define PITCH_ANGLE_PID_KD 0.0f//3.0f
+#define PITCH_ANGLE_PID_MAX_OUT 24000.0f
+#define PITCH_ANGLE_PID_MAX_IOUT 5000.0f
 
 
-#define PITCH_MOTOR_AUTO_AIM_PID_KP 0.2f
-#define PITCH_MOTOR_AUTO_AIM_PID_KI 0.0f//0.0005f
-#define PITCH_MOTOR_AUTO_AIM_PID_KD 0.0f
-#define PITCH_MOTOR_AUTO_AIM_PID_MAX_OUT 3.0f
-#define PITCH_MOTOR_AUTO_AIM_PID_MAX_IOUT 100.0f
+typedef struct
+{
+	fp32 gimbal_pitch_real;
+	fp32 gimbal_roll_real;
+	
+	fp32 gimbal_pitch_set;
+	fp32 gimbal_roll_set;
+	
+	uint32_t PwmL;
+	uint32_t PwmR;
 
-#define CHASSIS_FOLLOW_GIMBAL_ANGLE_ZERO 5783
+	uint8_t enable_flag;  //enable:1     disable:0
+	uint8_t mode_flag;    //self_ctrl:1  outside_ctrl:0
+	uint8_t uartupdate_flag;
 
+	
+	pid_type_def roll_pid;
+	pid_type_def pitch_pid;
 
+} gimbal_ctrl_t;
 
 
 void Gimbal_Task(void const * argument);
+
+void Gimbal_Init(void);
+void Gimbal_Data_Update(void);
+void KeyScan(void);
+void SelfCtrl(void);
+void MotorCtrl(void);
 
 #endif

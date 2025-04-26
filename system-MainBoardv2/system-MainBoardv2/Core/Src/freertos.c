@@ -47,7 +47,7 @@
 /* USER CODE BEGIN Variables */
 osThreadId Gimbal_TASKHandle;
 /* USER CODE END Variables */
-osThreadId defaultTaskHandle;
+osThreadId UART_TaskHandle;
 osThreadId INS_TASKHandle;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,7 +56,7 @@ void Gimbal_Task(void const * argument);
 
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void const * argument);
+void usart_task(void const * argument);
 void INS_Task(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -120,9 +120,9 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* definition and creation of UART_Task */
+  osThreadDef(UART_Task, usart_task, osPriorityNormal, 0, 512);
+  UART_TaskHandle = osThreadCreate(osThread(UART_Task), NULL);
 
   /* definition and creation of INS_TASK */
   osThreadDef(INS_TASK, INS_Task, osPriorityHigh, 0, 512);
@@ -136,22 +136,22 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_usart_task */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the UART_Task thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+/* USER CODE END Header_usart_task */
+__weak void usart_task(void const * argument)
 {
-  /* USER CODE BEGIN StartDefaultTask */
+  /* USER CODE BEGIN usart_task */
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1000);
+    osDelay(1);
   }
-  /* USER CODE END StartDefaultTask */
+  /* USER CODE END usart_task */
 }
 
 /* USER CODE BEGIN Header_INS_Task */
