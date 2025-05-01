@@ -17,6 +17,7 @@ float BattVotg;
 uint8_t sw1_flag=0;
 
 extern fp32 INS_angle_deg[3];
+extern uint16_t ADC_buf[2];
 
 gimbal_ctrl_t gimbal_ctrl;
 
@@ -69,12 +70,16 @@ void Gimbal_Init(void)
 
     PID_init(&gimbal_ctrl.pitch_pid, PID_DELTA, pitch_angle_pid , ROLL_ANGLE_PID_MAX_OUT, PITCH_ANGLE_PID_MAX_IOUT);
     PID_init(&gimbal_ctrl.roll_pid, PID_POSITION, roll_angle_pid, PITCH_ANGLE_PID_MAX_OUT, ROLL_ANGLE_PID_MAX_IOUT);
+		
 }
 
 void Gimbal_Data_Update(void)
 {
 		gimbal_ctrl.gimbal_pitch_real=90.0f+INS_angle_deg[1];
 		gimbal_ctrl.gimbal_roll_real=INS_angle_deg[2];   //<- + 
+	
+		gimbal_ctrl.board_temp=((((float)(ADC_buf[0]) / 4096 * 3.3f)-0.76f)/0.0025f) + 25;
+		gimbal_ctrl.batt_votage=(float)(ADC_buf[1]) / 4096 * 3.3f * 1.51f;
 }
 
 

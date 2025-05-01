@@ -6,16 +6,16 @@
 
 
 
-#define ROLL_ANGLE_PID_KP 25.0f//0.2f
-#define ROLL_ANGLE_PID_KI 1.0f
-#define ROLL_ANGLE_PID_KD 300.0f//3.0f
-#define ROLL_ANGLE_PID_MAX_OUT 5000.0f
+#define ROLL_ANGLE_PID_KP 70.0f//0.2f
+#define ROLL_ANGLE_PID_KI 3.0f
+#define ROLL_ANGLE_PID_KD 2000.0f//3.0f
+#define ROLL_ANGLE_PID_MAX_OUT 10000.0f
 #define ROLL_ANGLE_PID_MAX_IOUT 1000.0f
 
-#define PITCH_ANGLE_PID_KP 130.0f//0.2f
+#define PITCH_ANGLE_PID_KP 150.0f//0.2f
 #define PITCH_ANGLE_PID_KI 10.0f
-#define PITCH_ANGLE_PID_KD 5.0f//3.0f
-#define PITCH_ANGLE_PID_MAX_OUT 5000.0f
+#define PITCH_ANGLE_PID_KD 2500.0f//3.0f
+#define PITCH_ANGLE_PID_MAX_OUT 10000.0f
 #define PITCH_ANGLE_PID_MAX_IOUT 500.0f
 
 
@@ -37,6 +37,9 @@ typedef struct
 	
 	pid_type_def roll_pid;
 	pid_type_def pitch_pid;
+	
+	float board_temp;
+	float batt_votage;
 
 } gimbal_ctrl_t;
 
