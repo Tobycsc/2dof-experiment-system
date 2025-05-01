@@ -6,18 +6,22 @@
 
 
 
-#define ROLL_ANGLE_PID_KP 70.0f//0.2f
-#define ROLL_ANGLE_PID_KI 3.0f
-#define ROLL_ANGLE_PID_KD 2000.0f//3.0f
+#define ROLL_ANGLE_PID_KP 80.0f//80.0f
+#define ROLL_ANGLE_PID_KI 0.5f//0.5f
+#define ROLL_ANGLE_PID_KD 4200.0f//4200.0f
 #define ROLL_ANGLE_PID_MAX_OUT 10000.0f
 #define ROLL_ANGLE_PID_MAX_IOUT 1000.0f
 
-#define PITCH_ANGLE_PID_KP 150.0f//0.2f
-#define PITCH_ANGLE_PID_KI 10.0f
-#define PITCH_ANGLE_PID_KD 2500.0f//3.0f
+#define PITCH_ANGLE_PID_KP 60.0f//60.0f
+#define PITCH_ANGLE_PID_KI 1.5f//1.5f
+#define PITCH_ANGLE_PID_KD 4000.0f//4000.0f
 #define PITCH_ANGLE_PID_MAX_OUT 10000.0f
-#define PITCH_ANGLE_PID_MAX_IOUT 500.0f
+#define PITCH_ANGLE_PID_MAX_IOUT 1000.0f
 
+enum BATSTATE
+{
+	BATT_CHARGING=1,BATT_FULL,BATT_BOOSTING
+};
 
 typedef struct
 {
@@ -40,6 +44,7 @@ typedef struct
 	
 	float board_temp;
 	float batt_votage;
+	enum BATSTATE batt_state;
 
 } gimbal_ctrl_t;
 

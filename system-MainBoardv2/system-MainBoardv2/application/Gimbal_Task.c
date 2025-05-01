@@ -16,6 +16,8 @@
 float BattVotg;
 uint8_t sw1_flag=0;
 
+uint16_t LED_cnt=0;
+
 extern fp32 INS_angle_deg[3];
 extern uint16_t ADC_buf[2];
 
@@ -34,12 +36,18 @@ void Gimbal_Task(void const* argument)
 				if(gimbal_ctrl.mode_flag)
 				{
 					SelfCtrl();
+					LED_cnt++;
+					if(LED_cnt>=200)
+					{
+						LED_cnt=0;
+						HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_2);
+					}
 				}
 				else
 				{
 				}
 				MotorCtrl();
-        vTaskDelay(20);
+        vTaskDelay(5);
     }
 }
 
@@ -80,6 +88,20 @@ void Gimbal_Data_Update(void)
 	
 		gimbal_ctrl.board_temp=((((float)(ADC_buf[0]) / 4096 * 3.3f)-0.76f)/0.0025f) + 25;
 		gimbal_ctrl.batt_votage=(float)(ADC_buf[1]) / 4096 * 3.3f * 1.51f;
+	
+	  if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_14)&&HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15))
+		{
+			gimbal_ctrl.batt_state=BATT_BOOSTING;
+		}
+		else if(!HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15))
+		{
+			gimbal_ctrl.batt_state=BATT_FULL;
+		}
+		else
+		{
+			gimbal_ctrl.batt_state=BATT_CHARGING;
+		}
+		
 }
 
 
