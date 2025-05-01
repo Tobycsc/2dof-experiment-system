@@ -67,8 +67,8 @@ void Gimbal_Init(void)
 		gimbal_ctrl.uartupdate_flag=0;
 
 
-    PID_init(&gimbal_ctrl.pitch_pid, PID_POSITION, roll_angle_pid, ROLL_ANGLE_PID_MAX_OUT, ROLL_ANGLE_PID_MAX_IOUT);
-    PID_init(&gimbal_ctrl.roll_pid, PID_POSITION, pitch_angle_pid, PITCH_ANGLE_PID_MAX_OUT, PITCH_ANGLE_PID_MAX_IOUT);
+    PID_init(&gimbal_ctrl.pitch_pid, PID_DELTA, pitch_angle_pid , ROLL_ANGLE_PID_MAX_OUT, PITCH_ANGLE_PID_MAX_IOUT);
+    PID_init(&gimbal_ctrl.roll_pid, PID_POSITION, roll_angle_pid, PITCH_ANGLE_PID_MAX_OUT, ROLL_ANGLE_PID_MAX_IOUT);
 }
 
 void Gimbal_Data_Update(void)
@@ -111,8 +111,8 @@ void SelfCtrl(void)
 		{
 			PID_calc(&gimbal_ctrl.pitch_pid, gimbal_ctrl.gimbal_pitch_real, gimbal_ctrl.gimbal_pitch_set);
 			PID_calc(&gimbal_ctrl.roll_pid, gimbal_ctrl.gimbal_roll_real, gimbal_ctrl.gimbal_roll_set);
-			gimbal_ctrl.PwmL=gimbal_ctrl.roll_pid.out-gimbal_ctrl.pitch_pid.out;
-			gimbal_ctrl.PwmR=-gimbal_ctrl.roll_pid.out-gimbal_ctrl.pitch_pid.out;
+			gimbal_ctrl.PwmL=-gimbal_ctrl.roll_pid.out+gimbal_ctrl.pitch_pid.out;
+			gimbal_ctrl.PwmR=gimbal_ctrl.roll_pid.out+gimbal_ctrl.pitch_pid.out;
 		}
 		else
 		{
