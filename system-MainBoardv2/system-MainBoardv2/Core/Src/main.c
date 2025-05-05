@@ -26,7 +26,7 @@
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
-#include "usb_otg.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -105,7 +105,6 @@ int main(void)
   MX_I2C2_Init();
   MX_TIM1_Init();
   MX_TIM3_Init();
-  MX_USB_OTG_FS_PCD_Init();
   MX_ADC1_Init();
   MX_CRC_Init();
   MX_I2C1_Init();
@@ -113,6 +112,9 @@ int main(void)
 	delay_init();
 	TIM1->CCR2=0;
 	TIM1->CCR3=0;
+	
+	MX_USB_DEVICE_Init();
+	
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);

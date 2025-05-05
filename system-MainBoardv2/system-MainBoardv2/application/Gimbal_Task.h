@@ -8,13 +8,13 @@
 
 #define ROLL_ANGLE_PID_KP 80.0f//80.0f
 #define ROLL_ANGLE_PID_KI 0.5f//0.5f
-#define ROLL_ANGLE_PID_KD 4200.0f//4200.0f
+#define ROLL_ANGLE_PID_KD 4500.0f//4500.0f
 #define ROLL_ANGLE_PID_MAX_OUT 10000.0f
 #define ROLL_ANGLE_PID_MAX_IOUT 1000.0f
 
-#define PITCH_ANGLE_PID_KP 60.0f//60.0f
-#define PITCH_ANGLE_PID_KI 1.5f//1.5f
-#define PITCH_ANGLE_PID_KD 4000.0f//4000.0f
+#define PITCH_ANGLE_PID_KP 70.0f//70.0f
+#define PITCH_ANGLE_PID_KI 0.5f//0.5f
+#define PITCH_ANGLE_PID_KD 3000.0f//3000.0f
 #define PITCH_ANGLE_PID_MAX_OUT 10000.0f
 #define PITCH_ANGLE_PID_MAX_IOUT 1000.0f
 
@@ -49,12 +49,27 @@ typedef struct
 } gimbal_ctrl_t;
 
 
+
+
+
+
+
 void Gimbal_Task(void const * argument);
 
-void Gimbal_Init(void);
-void Gimbal_Data_Update(void);
+void GimbalInit(void);
+void GimbalDataUpdate(void);
 void KeyScan(void);
 void SelfCtrl(void);
 void MotorCtrl(void);
+void AttitudeSend(void);
+
+
+
+float u8Arry2float(uint8_t *data);
+void float2u8Arry(uint8_t *u8Arry, float *floatdata);
+int32_t u8Arry2int32(uint8_t* data);
+
+
+
 
 #endif

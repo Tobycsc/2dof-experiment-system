@@ -6,7 +6,7 @@
 #include "protocol.h"
 #include "Gimbal_Task.h"
 
-
+#include "usbd_cdc_if.h"
 
 /* Private define ------------------------------------------------------------*/
 #define Referee_FIFOInit fifo_s_init
@@ -21,7 +21,7 @@ extern DMA_HandleTypeDef hdma_usart2_tx;
 /* Private variables ---------------------------------------------------------*/
 
 
-
+extern gimbal_ctrl_t gimbal_ctrl;
 
 void usart_task(void const* argument)
 {
@@ -30,7 +30,8 @@ void usart_task(void const* argument)
     vTaskDelay(300);
     while(1)
     {
-
+			
+				//CDC_Transmit_FS()
         vTaskDelay(10);
 
     }

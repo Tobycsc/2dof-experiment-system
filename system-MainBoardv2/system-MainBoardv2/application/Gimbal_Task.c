@@ -10,6 +10,8 @@
 #include "string.h"
 #include "bsp_adc.h"
 
+#include "usbd_cdc_if.h"
+
 
 
 
@@ -26,12 +28,12 @@ gimbal_ctrl_t gimbal_ctrl;
 
 void Gimbal_Task(void const* argument)
 {
-    Gimbal_Init();
+    GimbalInit();
     vTaskDelay(200);
 
     while(1)
     {
-				Gimbal_Data_Update();
+				GimbalDataUpdate();
 				KeyScan();
 				if(gimbal_ctrl.mode_flag)
 				{
@@ -47,6 +49,10 @@ void Gimbal_Task(void const* argument)
 				{
 				}
 				MotorCtrl();
+				
+				
+				AttitudeSend();
+				
         vTaskDelay(5);
     }
 }
@@ -59,7 +65,7 @@ void Gimbal_Task(void const* argument)
 
 
 
-void Gimbal_Init(void)
+void GimbalInit(void)
 {
     const static fp32 roll_angle_pid[3] = {ROLL_ANGLE_PID_KP, ROLL_ANGLE_PID_KI, ROLL_ANGLE_PID_KD};
     const static fp32 pitch_angle_pid[3] = {PITCH_ANGLE_PID_KP, PITCH_ANGLE_PID_KI, PITCH_ANGLE_PID_KD};
@@ -81,7 +87,7 @@ void Gimbal_Init(void)
 		
 }
 
-void Gimbal_Data_Update(void)
+void GimbalDataUpdate(void)
 {
 		gimbal_ctrl.gimbal_pitch_real=90.0f+INS_angle_deg[1];
 		gimbal_ctrl.gimbal_roll_real=INS_angle_deg[2];   //<- + 
@@ -96,10 +102,12 @@ void Gimbal_Data_Update(void)
 		else if(!HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15))
 		{
 			gimbal_ctrl.batt_state=BATT_FULL;
+			HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3,GPIO_PIN_SET);
 		}
 		else
 		{
 			gimbal_ctrl.batt_state=BATT_CHARGING;
+			HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3,GPIO_PIN_RESET);
 		}
 		
 }
@@ -164,4 +172,82 @@ void MotorCtrl(void)
 	}
 	TIM1->CCR2=gimbal_ctrl.PwmL;
 	TIM1->CCR3=gimbal_ctrl.PwmR;
+}
+
+void AttitudeSend(void)
+{
+	uint8_t justFloatTail[50];
+	
+	
+	float2u8Arry(&justFloatTail[0],&gimbal_ctrl.gimbal_pitch_real);
+	float2u8Arry(&justFloatTail[4],&gimbal_ctrl.gimbal_roll_real);
+		
+	justFloatTail[8]=0x00;
+	justFloatTail[9]=0x00;
+	justFloatTail[10]=0x80;
+	justFloatTail[11]=0x7f;
+	
+	CDC_Transmit_FS(justFloatTail,12);
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+float u8Arry2float(uint8_t *data)
+{
+    uint8_t uc[4];
+    float fa = 0;
+
+    uc[0] = data[0];
+    uc[1] = data[1];
+    uc[2] = data[2];
+    uc[3] = data[3];
+
+    memcpy(&fa, uc, 4);
+    return fa;
+}
+
+void float2u8Arry(uint8_t *u8Arry, float *floatdata)
+{
+    uint8_t farray[4];
+    *(float *)farray = *floatdata;
+    u8Arry[3] = farray[3];
+    u8Arry[2] = farray[2];
+    u8Arry[1] = farray[1];
+    u8Arry[0] = farray[0];
+}
+
+int32_t u8Arry2int32(uint8_t* data)
+{
+    int32_t fa = 0;
+    uint8_t uc[4];
+
+    uc[3] = data[0];
+    uc[2] = data[1];
+    uc[1] = data[2];
+    uc[0] = data[3];
+
+    memcpy(&fa, uc, 4);
+    return fa;
 }
