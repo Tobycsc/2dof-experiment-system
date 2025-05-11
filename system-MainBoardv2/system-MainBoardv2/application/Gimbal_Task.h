@@ -18,33 +18,37 @@
 #define PITCH_ANGLE_PID_MAX_OUT 10000.0f
 #define PITCH_ANGLE_PID_MAX_IOUT 1000.0f
 
-enum BATSTATE
+enum BATSTATE    //charger state enum
 {
-	BATT_CHARGING=1,BATT_FULL,BATT_BOOSTING
+	BATT_CHARGING=1,BATT_FULL,BATT_BOOSTING  
 };
 
 typedef struct
 {
-	fp32 gimbal_pitch_real;
-	fp32 gimbal_roll_real;
+	fp32 gimbal_pitch_real;  
+	fp32 gimbal_roll_real;     //real angle data
 	
 	fp32 gimbal_pitch_set;
-	fp32 gimbal_roll_set;
-	
-	uint32_t PwmL;
-	uint32_t PwmR;
-
-	uint8_t enable_flag;  //enable:1     disable:0
-	uint8_t mode_flag;    //self_ctrl:1  outside_ctrl:0
-	uint8_t uartupdate_flag;
-
+	fp32 gimbal_roll_set;      //self ctrl mode angle set
 	
 	pid_type_def roll_pid;
-	pid_type_def pitch_pid;
+	pid_type_def pitch_pid;    //self ctrl pid
 	
-	float board_temp;
-	float batt_votage;
-	enum BATSTATE batt_state;
+	float board_temp;          //read from MCU
+	float batt_votage;         //1S Li-on
+	enum BATSTATE batt_state;  //charger state
+	 
+	uint32_t PwmL;             
+	uint32_t PwmR;             //motor PWM buffer  Range:0-20000  Freq:500khz
+
+	uint8_t enable_flag;       //enable:1     disable:0   
+	uint8_t mode_flag;         //self_ctrl:1  outside_ctrl:0
+	uint8_t uartupdate_flag;   //uart updata state  1:system parameter ctrl   2:ctrl data input(outside_ctrl only)
+
+	uint8_t uarttran_flag;   //uart transmit state  [7]:attitude   [6]:basic operating state(enable mode temp vottage charger state)   [5]:pid para
+
+	
+
 
 } gimbal_ctrl_t;
 
@@ -61,7 +65,7 @@ void GimbalDataUpdate(void);
 void KeyScan(void);
 void SelfCtrl(void);
 void MotorCtrl(void);
-void AttitudeSend(void);
+void DataSend(void);
 
 
 

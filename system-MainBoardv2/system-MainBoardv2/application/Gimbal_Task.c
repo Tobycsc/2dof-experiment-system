@@ -15,15 +15,17 @@
 
 
 
-float BattVotg;
-uint8_t sw1_flag=0;
 
-uint16_t LED_cnt=0;
+uint8_t sw1_flag=0;           
+uint8_t sw2_flag=0;           
+uint8_t sw3_flag=0;           //switch state buffer
 
-extern fp32 INS_angle_deg[3];
-extern uint16_t ADC_buf[2];
+uint16_t LED_cnt=0;           //for frequece calc
 
-gimbal_ctrl_t gimbal_ctrl;
+extern fp32 INS_angle_deg[3]; //IMU angle data
+extern uint16_t ADC_buf[2];   //batt data buffer
+
+gimbal_ctrl_t gimbal_ctrl;    //main data struct 
 
 
 void Gimbal_Task(void const* argument)
@@ -34,7 +36,7 @@ void Gimbal_Task(void const* argument)
     while(1)
     {
 				GimbalDataUpdate();
-				KeyScan();
+				
 				if(gimbal_ctrl.mode_flag)
 				{
 					SelfCtrl();
@@ -47,11 +49,12 @@ void Gimbal_Task(void const* argument)
 				}
 				else
 				{
+					
 				}
 				MotorCtrl();
 				
 				
-				AttitudeSend();
+				DataSend();
 				
         vTaskDelay(5);
     }
@@ -89,6 +92,7 @@ void GimbalInit(void)
 
 void GimbalDataUpdate(void)
 {
+	
 		gimbal_ctrl.gimbal_pitch_real=90.0f+INS_angle_deg[1];
 		gimbal_ctrl.gimbal_roll_real=INS_angle_deg[2];   //<- + 
 	
@@ -109,6 +113,9 @@ void GimbalDataUpdate(void)
 			gimbal_ctrl.batt_state=BATT_CHARGING;
 			HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3,GPIO_PIN_RESET);
 		}
+		
+		KeyScan();
+		
 		
 }
 
@@ -174,10 +181,13 @@ void MotorCtrl(void)
 	TIM1->CCR3=gimbal_ctrl.PwmR;
 }
 
-void AttitudeSend(void)
+void DataSend(void)
 {
-	uint8_t justFloatTail[50];
 	
+	
+	
+	
+	uint8_t justFloatTail[50];
 	
 	float2u8Arry(&justFloatTail[0],&gimbal_ctrl.gimbal_pitch_real);
 	float2u8Arry(&justFloatTail[4],&gimbal_ctrl.gimbal_roll_real);
@@ -189,6 +199,10 @@ void AttitudeSend(void)
 	
 	CDC_Transmit_FS(justFloatTail,12);
 
+	
+	
+	
+	
 
 }
 
