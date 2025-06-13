@@ -1,5 +1,6 @@
 #include "Gimbal_Task.h"
 #include "INS_Task.h"
+#include "bsp_flash.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -14,7 +15,7 @@
 
 
 
-
+uint8_t ywj=0;
 
 uint8_t sw1_flag=0;           
 uint8_t sw2_flag=0;           
@@ -56,6 +57,12 @@ void Gimbal_Task(void const* argument)
 				
 				DataSend();
 				
+				if(ywj)
+				{
+					ywj=0;
+					WriteAllPara();
+				}
+				
         vTaskDelay(5);
     }
 }
@@ -70,9 +77,8 @@ void Gimbal_Task(void const* argument)
 
 void GimbalInit(void)
 {
-    const static fp32 roll_angle_pid[3] = {ROLL_ANGLE_PID_KP, ROLL_ANGLE_PID_KI, ROLL_ANGLE_PID_KD};
-    const static fp32 pitch_angle_pid[3] = {PITCH_ANGLE_PID_KP, PITCH_ANGLE_PID_KI, PITCH_ANGLE_PID_KD};
 
+    ReadAllPara();
 
 		gimbal_ctrl.enable_flag=0;
 		gimbal_ctrl.mode_flag=1;
@@ -84,9 +90,17 @@ void GimbalInit(void)
 		gimbal_ctrl.gimbal_roll_real=0;
 		gimbal_ctrl.uartupdate_flag=0;
 
+	
+		fp32 roll_angle_pid_para_t[3] = {ROLL_ANGLE_PID_KP,ROLL_ANGLE_PID_KI,ROLL_ANGLE_PID_KD};
+		fp32 pitch_angle_pid_para_t[3] = {PITCH_ANGLE_PID_KP,PITCH_ANGLE_PID_KI,PITCH_ANGLE_PID_KD};
+		
+		roll_angle_pid_para_t[0]=gimbal_ctrl.roll_angle_pid_para.para_kp;
+		roll_angle_pid_para_t[1]=gimbal_ctrl.roll_angle_pid_para.para_ki;
+		roll_angle_pid_para_t[2]=gimbal_ctrl.roll_angle_pid_para.para_kd;
+		
 
-    PID_init(&gimbal_ctrl.pitch_pid, PID_DELTA, pitch_angle_pid , ROLL_ANGLE_PID_MAX_OUT, PITCH_ANGLE_PID_MAX_IOUT);
-    PID_init(&gimbal_ctrl.roll_pid, PID_POSITION, roll_angle_pid, PITCH_ANGLE_PID_MAX_OUT, ROLL_ANGLE_PID_MAX_IOUT);
+    PID_init(&gimbal_ctrl.pitch_angle_pid, PID_DELTA, pitch_angle_pid_para_t , ROLL_ANGLE_PID_MAX_OUT, PITCH_ANGLE_PID_MAX_IOUT);
+    PID_init(&gimbal_ctrl.roll_angle_pid, PID_POSITION, roll_angle_pid_para_t, PITCH_ANGLE_PID_MAX_OUT, ROLL_ANGLE_PID_MAX_IOUT);
 		
 }
 
@@ -151,10 +165,10 @@ void SelfCtrl(void)
 {
 		if(gimbal_ctrl.enable_flag)
 		{
-			PID_calc(&gimbal_ctrl.pitch_pid, gimbal_ctrl.gimbal_pitch_real, gimbal_ctrl.gimbal_pitch_set);
-			PID_calc(&gimbal_ctrl.roll_pid, gimbal_ctrl.gimbal_roll_real, gimbal_ctrl.gimbal_roll_set);
-			gimbal_ctrl.PwmL=-gimbal_ctrl.roll_pid.out+gimbal_ctrl.pitch_pid.out;
-			gimbal_ctrl.PwmR=gimbal_ctrl.roll_pid.out+gimbal_ctrl.pitch_pid.out;
+			PID_calc(&gimbal_ctrl.pitch_angle_pid, gimbal_ctrl.gimbal_pitch_real, gimbal_ctrl.gimbal_pitch_set);
+			PID_calc(&gimbal_ctrl.roll_angle_pid, gimbal_ctrl.gimbal_roll_real, gimbal_ctrl.gimbal_roll_set);
+			gimbal_ctrl.PwmL=-gimbal_ctrl.roll_angle_pid.out+gimbal_ctrl.pitch_angle_pid.out;
+			gimbal_ctrl.PwmR=gimbal_ctrl.roll_angle_pid.out+gimbal_ctrl.pitch_angle_pid.out;
 		}
 		else
 		{

@@ -1036,6 +1036,11 @@
               <FileType>1</FileType>
               <FilePath>..\bsp\bsp_usart.c</FilePath>
             </File>
+            <File>
+              <FileName>bsp_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_flash.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
