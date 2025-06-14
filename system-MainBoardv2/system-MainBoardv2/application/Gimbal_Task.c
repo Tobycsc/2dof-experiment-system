@@ -22,8 +22,10 @@ uint8_t sw2_flag=0;
 uint8_t sw3_flag=0;           //switch state buffer
 
 uint16_t LED_cnt=0;           //for frequece calc
+uint16_t uart_cnt=0;           //for tran ferq ctrl
 
 extern fp32 INS_angle_deg[3]; //IMU angle data
+extern bmi088_real_data_t bmi088_real_data; //IMU data
 extern uint16_t ADC_buf[2];   //batt data buffer
 
 gimbal_ctrl_t gimbal_ctrl;    //main data struct 
@@ -41,26 +43,20 @@ void Gimbal_Task(void const* argument)
 				if(gimbal_ctrl.mode_flag)
 				{
 					SelfCtrl();
-					LED_cnt++;
-					if(LED_cnt>=200)
-					{
-						LED_cnt=0;
-						HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_2);
-					}
 				}
 				else
 				{
-					
+					OutsideCtrl();
 				}
-				MotorCtrl();
-				
+				MotorCtrl();				
 				
 				DataSend();
 				
-				if(ywj)
+				LED_cnt++;
+				if(LED_cnt>=200)
 				{
-					ywj=0;
-					WriteAllPara();
+					LED_cnt=0;
+					HAL_GPIO_TogglePin(GPIOE,GPIO_PIN_2);
 				}
 				
         vTaskDelay(5);
@@ -77,30 +73,86 @@ void Gimbal_Task(void const* argument)
 
 void GimbalInit(void)
 {
+	
+		fp32 roll_angle_pid_para_t[3];
+		fp32 roll_speed_pid_para_t[3];
+		fp32 pitch_angle_pid_para_t[3];	
+		fp32 pitch_speed_pid_para_t[3];
+		
+		if(INIT_FLAG)
+		{
+			gimbal_ctrl.roll_angle_pid_para.para_kp=ROLL_ANGLE_PID_KP;
+			gimbal_ctrl.roll_angle_pid_para.para_ki=ROLL_ANGLE_PID_KI;
+			gimbal_ctrl.roll_angle_pid_para.para_kd=ROLL_ANGLE_PID_KD;
+			gimbal_ctrl.roll_angle_pid_para.para_max_out=ROLL_ANGLE_PID_MAX_OUT;
+			gimbal_ctrl.roll_angle_pid_para.para_max_iout=ROLL_ANGLE_PID_MAX_IOUT;
+			gimbal_ctrl.roll_angle_pid_para.pid_type=ROLL_ANGLE_PID_TYPE;
+			
+			gimbal_ctrl.roll_speed_pid_para.para_kp=ROLL_SPEED_PID_KP;
+			gimbal_ctrl.roll_speed_pid_para.para_ki=ROLL_SPEED_PID_KI;
+			gimbal_ctrl.roll_speed_pid_para.para_kd=ROLL_SPEED_PID_KD;
+			gimbal_ctrl.roll_speed_pid_para.para_max_out=ROLL_SPEED_PID_MAX_OUT;
+			gimbal_ctrl.roll_speed_pid_para.para_max_iout=ROLL_SPEED_PID_MAX_IOUT;
+			gimbal_ctrl.roll_speed_pid_para.pid_type=ROLL_SPEED_PID_TYPE;			
+			
+			gimbal_ctrl.pitch_angle_pid_para.para_kp=PITCH_ANGLE_PID_KP;
+			gimbal_ctrl.pitch_angle_pid_para.para_ki=PITCH_ANGLE_PID_KI;
+			gimbal_ctrl.pitch_angle_pid_para.para_kd=PITCH_ANGLE_PID_KD;
+			gimbal_ctrl.pitch_angle_pid_para.para_max_out=PITCH_ANGLE_PID_MAX_OUT;
+			gimbal_ctrl.pitch_angle_pid_para.para_max_iout=PITCH_ANGLE_PID_MAX_IOUT;
+			gimbal_ctrl.pitch_angle_pid_para.pid_type=PITCH_ANGLE_PID_TYPE;			
+			
+			gimbal_ctrl.pitch_speed_pid_para.para_kp=PITCH_SPEED_PID_KP;
+			gimbal_ctrl.pitch_speed_pid_para.para_ki=PITCH_SPEED_PID_KI;
+			gimbal_ctrl.pitch_speed_pid_para.para_kd=PITCH_SPEED_PID_KD;
+			gimbal_ctrl.pitch_speed_pid_para.para_max_out=PITCH_SPEED_PID_MAX_OUT;
+			gimbal_ctrl.pitch_speed_pid_para.para_max_iout=PITCH_SPEED_PID_MAX_IOUT;
+			gimbal_ctrl.pitch_speed_pid_para.pid_type=PITCH_SPEED_PID_TYPE;			
+		
+		
+			gimbal_ctrl.mode_flag=MODE_DEFAULT;
+			gimbal_ctrl.uarttran_flag=UARTTRAN_DEFAULT;
+			
+			WriteAllPara();
+		}
 
-    ReadAllPara();
+		else
+		{
+			ReadAllPara();
+		}
 
 		gimbal_ctrl.enable_flag=0;
-		gimbal_ctrl.mode_flag=1;
 		gimbal_ctrl.PwmL=0;
 		gimbal_ctrl.PwmR=0;
 		gimbal_ctrl.gimbal_pitch_set=0;
 		gimbal_ctrl.gimbal_roll_set=0;
 		gimbal_ctrl.gimbal_pitch_real=0;
 		gimbal_ctrl.gimbal_roll_real=0;
-		gimbal_ctrl.uartupdate_flag=0;
+		gimbal_ctrl.uartupdate_flag=50000;
 
 	
-		fp32 roll_angle_pid_para_t[3] = {ROLL_ANGLE_PID_KP,ROLL_ANGLE_PID_KI,ROLL_ANGLE_PID_KD};
-		fp32 pitch_angle_pid_para_t[3] = {PITCH_ANGLE_PID_KP,PITCH_ANGLE_PID_KI,PITCH_ANGLE_PID_KD};
-		
 		roll_angle_pid_para_t[0]=gimbal_ctrl.roll_angle_pid_para.para_kp;
 		roll_angle_pid_para_t[1]=gimbal_ctrl.roll_angle_pid_para.para_ki;
 		roll_angle_pid_para_t[2]=gimbal_ctrl.roll_angle_pid_para.para_kd;
 		
+		roll_speed_pid_para_t[0]=gimbal_ctrl.roll_speed_pid_para.para_kp;
+		roll_speed_pid_para_t[1]=gimbal_ctrl.roll_speed_pid_para.para_ki;
+		roll_speed_pid_para_t[2]=gimbal_ctrl.roll_speed_pid_para.para_kd;
+		
+		pitch_angle_pid_para_t[0]=gimbal_ctrl.pitch_angle_pid_para.para_kp;
+		pitch_angle_pid_para_t[1]=gimbal_ctrl.pitch_angle_pid_para.para_ki;
+		pitch_angle_pid_para_t[2]=gimbal_ctrl.pitch_angle_pid_para.para_kd;
+		
+		pitch_speed_pid_para_t[0]=gimbal_ctrl.pitch_speed_pid_para.para_kp;
+		pitch_speed_pid_para_t[1]=gimbal_ctrl.pitch_speed_pid_para.para_ki;
+		pitch_speed_pid_para_t[2]=gimbal_ctrl.pitch_speed_pid_para.para_kd;
 
-    PID_init(&gimbal_ctrl.pitch_angle_pid, PID_DELTA, pitch_angle_pid_para_t , ROLL_ANGLE_PID_MAX_OUT, PITCH_ANGLE_PID_MAX_IOUT);
-    PID_init(&gimbal_ctrl.roll_angle_pid, PID_POSITION, roll_angle_pid_para_t, PITCH_ANGLE_PID_MAX_OUT, ROLL_ANGLE_PID_MAX_IOUT);
+
+		PID_init(&gimbal_ctrl.roll_angle_pid, gimbal_ctrl.roll_angle_pid_para.pid_type, roll_angle_pid_para_t, gimbal_ctrl.roll_angle_pid_para.para_max_out, gimbal_ctrl.roll_angle_pid_para.para_max_iout);
+		PID_init(&gimbal_ctrl.roll_speed_pid, gimbal_ctrl.roll_speed_pid_para.pid_type, roll_speed_pid_para_t, gimbal_ctrl.roll_speed_pid_para.para_max_out, gimbal_ctrl.roll_speed_pid_para.para_max_iout);
+		PID_init(&gimbal_ctrl.pitch_angle_pid, gimbal_ctrl.pitch_angle_pid_para.pid_type, pitch_angle_pid_para_t, gimbal_ctrl.pitch_angle_pid_para.para_max_out, gimbal_ctrl.pitch_angle_pid_para.para_max_iout);
+    PID_init(&gimbal_ctrl.pitch_speed_pid, gimbal_ctrl.pitch_speed_pid_para.pid_type, pitch_speed_pid_para_t , gimbal_ctrl.pitch_speed_pid_para.para_max_out, gimbal_ctrl.pitch_speed_pid_para.para_max_iout);
+    
 		
 }
 
@@ -110,14 +162,17 @@ void GimbalDataUpdate(void)
 		gimbal_ctrl.gimbal_pitch_real=90.0f+INS_angle_deg[1];
 		gimbal_ctrl.gimbal_roll_real=INS_angle_deg[2];   //<- + 
 	
+		gimbal_ctrl.gimbal_pitchspeed_real=bmi088_real_data.gyro[0];
+		gimbal_ctrl.gimbal_rollspeed_real=bmi088_real_data.gyro[2];
+	
 		gimbal_ctrl.board_temp=((((float)(ADC_buf[0]) / 4096 * 3.3f)-0.76f)/0.0025f) + 25;
 		gimbal_ctrl.batt_votage=(float)(ADC_buf[1]) / 4096 * 3.3f * 1.51f;
 	
-	  if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_14)&&HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15))
+	  if(HAL_GPIO_ReadPin(GPIOD,GPIO_PIN_8)&&HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15))
 		{
 			gimbal_ctrl.batt_state=BATT_BOOSTING;
 		}
-		else if(!HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15))
+		else if(!HAL_GPIO_ReadPin(GPIOD,GPIO_PIN_8))
 		{
 			gimbal_ctrl.batt_state=BATT_FULL;
 			HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3,GPIO_PIN_SET);
@@ -175,46 +230,227 @@ void SelfCtrl(void)
 			gimbal_ctrl.PwmL=0;
 			gimbal_ctrl.PwmR=0;
 		}
-    
-
 
 }
+
+
+void OutsideCtrl(void)
+{
+		if(!gimbal_ctrl.enable_flag)
+		{
+			gimbal_ctrl.PwmL=0;
+			gimbal_ctrl.PwmR=0;
+		}
+		if(!gimbal_ctrl.uartupdate_flag)
+		{
+			gimbal_ctrl.enable_flag=0;
+		}
+}
+
 
 
 void MotorCtrl(void)
 {
-	if(gimbal_ctrl.PwmL<0)
-	{
-		gimbal_ctrl.PwmL=0;
-	}
-	if(gimbal_ctrl.PwmR<0)
-	{
-		gimbal_ctrl.PwmR=0;
-	}
-	TIM1->CCR2=gimbal_ctrl.PwmL;
-	TIM1->CCR3=gimbal_ctrl.PwmR;
+		if(gimbal_ctrl.PwmL<0)
+		{
+			gimbal_ctrl.PwmL=0;
+		}
+		if(gimbal_ctrl.PwmR<0)
+		{
+			gimbal_ctrl.PwmR=0;
+		}
+		TIM1->CCR2=gimbal_ctrl.PwmL;
+		TIM1->CCR3=gimbal_ctrl.PwmR;
+
+		
 }
 
 void DataSend(void)
 {
+	  uint8_t temp;
 	
-	
-	
-	
-	uint8_t justFloatTail[50];
-	
-	float2u8Arry(&justFloatTail[0],&gimbal_ctrl.gimbal_pitch_real);
-	float2u8Arry(&justFloatTail[4],&gimbal_ctrl.gimbal_roll_real);
+		if((uart_cnt==15)||(uart_cnt==105))
+		{
+			temp = (0x02);
+			temp &= gimbal_ctrl.uarttran_flag;
+			if(temp) //debug data
+			{
+				uint8_t justFloatTail[20];
+				uint8_t intarray[2];
+				*(uint16_t *)intarray = gimbal_ctrl.PwmL;
+				justFloatTail[0]=intarray[0];
+				justFloatTail[1]=intarray[1];
+				*(uint16_t *)intarray = gimbal_ctrl.PwmR;
+				justFloatTail[2]=intarray[0];
+				justFloatTail[3]=intarray[1];
+				
+				float2u8Arry(&justFloatTail[4],&gimbal_ctrl.gimbal_pitchspeed_real);
+				float2u8Arry(&justFloatTail[8],&gimbal_ctrl.gimbal_rollspeed_real);
+				
+				justFloatTail[12]=0x00;
+				justFloatTail[13]=0x00;
+				justFloatTail[14]=0x81;
+				justFloatTail[15]=0x7e;
+				
+				CDC_Transmit_FS(justFloatTail,16);
+			}
+		}
 		
-	justFloatTail[8]=0x00;
-	justFloatTail[9]=0x00;
-	justFloatTail[10]=0x80;
-	justFloatTail[11]=0x7f;
+		if((uart_cnt==30)||(uart_cnt==120))
+		{
+			temp = (0x04);
+			temp &= gimbal_ctrl.uarttran_flag;
+			if(temp) //basic data
+			{
+				uint8_t justFloatTail[25];
+				justFloatTail[0]=gimbal_ctrl.enable_flag;
+				justFloatTail[1]=gimbal_ctrl.mode_flag;
+				
+				float2u8Arry(&justFloatTail[2],&gimbal_ctrl.gimbal_pitch_set);
+				float2u8Arry(&justFloatTail[6],&gimbal_ctrl.gimbal_roll_set);
+				float2u8Arry(&justFloatTail[10],&gimbal_ctrl.board_temp);
+				float2u8Arry(&justFloatTail[14],&gimbal_ctrl.batt_votage);
+				
+				justFloatTail[18]=gimbal_ctrl.batt_state;
+				justFloatTail[19]=gimbal_ctrl.uarttran_flag;
+				
+				justFloatTail[20]=0x00;
+				justFloatTail[21]=0x00;
+				justFloatTail[22]=0x7e;
+				justFloatTail[23]=0x81;
+				
+				CDC_Transmit_FS(justFloatTail,24);
+			}
+		}
+		
+		if((uart_cnt==45)||(uart_cnt==135))
+		{		
+			temp = (0x08);
+			temp &= gimbal_ctrl.uarttran_flag;
+			if(temp) //roll angle pid para
+			{
+				uint8_t justFloatTail[28];
+				
+				float2u8Arry(&justFloatTail[0],&gimbal_ctrl.roll_angle_pid_para.para_kp);
+				float2u8Arry(&justFloatTail[4],&gimbal_ctrl.roll_angle_pid_para.para_ki);
+				float2u8Arry(&justFloatTail[8],&gimbal_ctrl.roll_angle_pid_para.para_kd);
+				float2u8Arry(&justFloatTail[12],&gimbal_ctrl.roll_angle_pid_para.para_max_out);
+				float2u8Arry(&justFloatTail[16],&gimbal_ctrl.roll_angle_pid_para.para_max_iout);	
+				
+				justFloatTail[20]=gimbal_ctrl.roll_angle_pid_para.pid_type;
+				justFloatTail[21]=1;
+				
+				justFloatTail[22]=0x00;
+				justFloatTail[23]=0x00;
+				justFloatTail[24]=0x7f;
+				justFloatTail[25]=0x80;
+				
+				CDC_Transmit_FS(justFloatTail,26);
+			}
+		}
+		
+		if((uart_cnt==60)||(uart_cnt==150))
+		{					
+			temp = (0x10);
+			temp &= gimbal_ctrl.uarttran_flag;
+			if(temp) //roll speed pid para
+			{
+				uint8_t justFloatTail[28];
+				
+				float2u8Arry(&justFloatTail[0],&gimbal_ctrl.roll_speed_pid_para.para_kp);
+				float2u8Arry(&justFloatTail[4],&gimbal_ctrl.roll_speed_pid_para.para_ki);
+				float2u8Arry(&justFloatTail[8],&gimbal_ctrl.roll_speed_pid_para.para_kd);
+				float2u8Arry(&justFloatTail[12],&gimbal_ctrl.roll_speed_pid_para.para_max_out);
+				float2u8Arry(&justFloatTail[16],&gimbal_ctrl.roll_speed_pid_para.para_max_iout);	
+				
+				justFloatTail[20]=gimbal_ctrl.roll_speed_pid_para.pid_type;
+				justFloatTail[21]=1;
+				
+				justFloatTail[22]=0x00;
+				justFloatTail[23]=0x00;
+				justFloatTail[24]=0x7f;
+				justFloatTail[25]=0x80;
+				
+				CDC_Transmit_FS(justFloatTail,26);
+			}
+		}
+		
+		if((uart_cnt==75)||(uart_cnt==165))
+		{			
+			temp = (0x20);
+			temp &= gimbal_ctrl.uarttran_flag;
+			if(temp) //pitch angle pid para
+			{
+				uint8_t justFloatTail[28];
+				
+				float2u8Arry(&justFloatTail[0],&gimbal_ctrl.pitch_angle_pid_para.para_kp);
+				float2u8Arry(&justFloatTail[4],&gimbal_ctrl.pitch_angle_pid_para.para_ki);
+				float2u8Arry(&justFloatTail[8],&gimbal_ctrl.pitch_angle_pid_para.para_kd);
+				float2u8Arry(&justFloatTail[12],&gimbal_ctrl.pitch_angle_pid_para.para_max_out);
+				float2u8Arry(&justFloatTail[16],&gimbal_ctrl.pitch_angle_pid_para.para_max_iout);	
+				
+				justFloatTail[20]=gimbal_ctrl.pitch_angle_pid_para.pid_type;
+				justFloatTail[21]=1;
+				
+				justFloatTail[22]=0x00;
+				justFloatTail[23]=0x00;
+				justFloatTail[24]=0x7f;
+				justFloatTail[25]=0x80;
+				
+				CDC_Transmit_FS(justFloatTail,26);
+			}
+		}
 	
-	CDC_Transmit_FS(justFloatTail,12);
-
+		if((uart_cnt==90)||(uart_cnt==180))
+		{					
+			temp = (0x40);
+			temp &= gimbal_ctrl.uarttran_flag;
+			if(temp) //pitch speed pid para
+			{
+				uint8_t justFloatTail[28];
+				
+				float2u8Arry(&justFloatTail[0],&gimbal_ctrl.pitch_speed_pid_para.para_kp);
+				float2u8Arry(&justFloatTail[4],&gimbal_ctrl.pitch_speed_pid_para.para_ki);
+				float2u8Arry(&justFloatTail[8],&gimbal_ctrl.pitch_speed_pid_para.para_kd);
+				float2u8Arry(&justFloatTail[12],&gimbal_ctrl.pitch_speed_pid_para.para_max_out);
+				float2u8Arry(&justFloatTail[16],&gimbal_ctrl.pitch_speed_pid_para.para_max_iout);	
+				
+				justFloatTail[20]=gimbal_ctrl.pitch_speed_pid_para.pid_type;
+				justFloatTail[21]=1;
+				
+				justFloatTail[22]=0x00;
+				justFloatTail[23]=0x00;
+				justFloatTail[24]=0x7f;
+				justFloatTail[25]=0x80;
+				
+				CDC_Transmit_FS(justFloatTail,26);
+			}
+		}
+		
+		temp = (0x01);
+		temp &= gimbal_ctrl.uarttran_flag;		
+		if(temp)
+		{
+			uint8_t justFloatTail[20];
+			float2u8Arry(&justFloatTail[0],&gimbal_ctrl.gimbal_pitch_real);
+			float2u8Arry(&justFloatTail[4],&gimbal_ctrl.gimbal_roll_real);
+				
+			justFloatTail[8]=0x00;
+			justFloatTail[9]=0x00;
+			justFloatTail[10]=0x80;
+			justFloatTail[11]=0x7f;
+			
+			CDC_Transmit_FS(justFloatTail,12);
+		}
 	
-	
+		if(uart_cnt>200)
+		{
+			uart_cnt=0;
+		}
+		else
+		{
+			uart_cnt++;
+		}
 	
 	
 

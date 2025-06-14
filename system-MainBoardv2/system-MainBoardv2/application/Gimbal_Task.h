@@ -11,12 +11,35 @@
 #define ROLL_ANGLE_PID_KD 4500.0f//4500.0f
 #define ROLL_ANGLE_PID_MAX_OUT 19000.0f
 #define ROLL_ANGLE_PID_MAX_IOUT 1000.0f
+#define ROLL_ANGLE_PID_TYPE PID_POSITION
+
+#define ROLL_SPEED_PID_KP 80.0f//80.0f
+#define ROLL_SPEED_PID_KI 0.5f//0.5f
+#define ROLL_SPEED_PID_KD 4500.0f//4500.0f
+#define ROLL_SPEED_PID_MAX_OUT 19000.0f
+#define ROLL_SPEED_PID_MAX_IOUT 1000.0f
+#define ROLL_SPEED_PID_TYPE PID_POSITION
 
 #define PITCH_ANGLE_PID_KP 70.0f//70.0f
 #define PITCH_ANGLE_PID_KI 0.5f//0.5f
 #define PITCH_ANGLE_PID_KD 3000.0f//3000.0f
 #define PITCH_ANGLE_PID_MAX_OUT 19000.0f
 #define PITCH_ANGLE_PID_MAX_IOUT 1000.0f
+#define PITCH_ANGLE_PID_TYPE PID_DELTA
+
+#define PITCH_SPEED_PID_KP 70.0f//70.0f
+#define PITCH_SPEED_PID_KI 0.5f//0.5f
+#define PITCH_SPEED_PID_KD 3000.0f//3000.0f
+#define PITCH_SPEED_PID_MAX_OUT 19000.0f
+#define PITCH_SPEED_PID_MAX_IOUT 1000.0f
+#define PITCH_SPEED_PID_TYPE PID_POSITION
+
+#define MODE_DEFAULT 1
+#define UARTTRAN_DEFAULT 0b00000001
+
+#define INIT_FLAG 0 //when this flag is 1 , the para above will be progarm into the flash at downloading
+
+
 
 enum BATSTATE    //charger state enum
 {
@@ -37,7 +60,7 @@ typedef struct
 typedef struct
 {
 	uint8_t enable_flag;       //enable:1     disable:0 
-	uint8_t uartupdate_flag;   //uart updata state  1:ctrl data input(outside_ctrl only)
+	uint16_t uartupdate_flag;   //uart updata state  1:ctrl data input(outside_ctrl only)
 
 	uint16_t PwmL;             
 	uint16_t PwmR;             //motor PWM buffer  Range:0-20000  Freq:500khz
@@ -48,10 +71,13 @@ typedef struct
 	
 	fp32 gimbal_pitch_real;  
 	fp32 gimbal_roll_real;     //real angle data
+	fp32 gimbal_pitchspeed_real;  
+	fp32 gimbal_rollspeed_real;     //real speed data
 
 	fp32 gimbal_pitch_set;
 	fp32 gimbal_roll_set;      //self ctrl mode angle set
-	
+	fp32 gimbal_pitchspeed_set;
+	fp32 gimbal_rollspeed_set;      //self ctrl mode speed set	
 	
 	
 	pid_type_def roll_angle_pid;
@@ -86,6 +112,7 @@ void GimbalInit(void);
 void GimbalDataUpdate(void);
 void KeyScan(void);
 void SelfCtrl(void);
+void OutsideCtrl(void);
 void MotorCtrl(void);
 void DataSend(void);
 
